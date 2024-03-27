@@ -5,25 +5,29 @@
 
 namespace NeuralNetwork {
 
+class Id {
+    // Identical function, Id(x) = x
+};
+
 class ReLU {
     // Elementwise function, ReLU(x) = max(0, x)
-}
+};
 
 class Sigmoid {
     // Elementwise function, Sigmoid(x) = 1 / (1 + exp(-x))
-}
+};
 
 class Tanh {
     // Elementwise function, Tanh(x) = (exp(x) - exp(-x)) / (exp(x) + exp(-x))
-}
+};
 
-namespace NeuralNetworkDetail {
+namespace NNActivationFuncDetail {
 
 template <class TBase>
 class IActivationFunction : public TBase {
 public:
     virtual Vector Compute(const Vector& x) const = 0;
-    virtual Matrix GetGradient(const Vector& x) const = 0;
+    virtual Matrix ComputeGradient(const Vector& x) const = 0;
 };
 
 template <class TBase, class TObject>
@@ -33,10 +37,25 @@ class ImplActivationFunction : public TBase {
 public:
     using CBase::CBase;
     Vector Compute(const Vector& x) const override {
+        // это очень костыльно, но лучше я не придумал
         assert(false && "Not activation function");
     }
     Matrix ComputeGradient(const Vector& x) const override {
         assert(false && "Not activation function");
+    }
+};
+
+template <class TBase>
+class ImplActivationFunction<TBase, Id> : public TBase {
+    using CBase = TBase;
+
+public:
+    using CBase::CBase;
+    Vector Compute(const Vector& x) const override {
+        return x;
+    }
+    Matrix ComputeGradient(const Vector& x) const override {
+        return Matrix::Identity(x.size(), x.size());
     }
 };
 
@@ -50,7 +69,7 @@ public:
         return x.cwiseMax(0);
     }
     Matrix ComputeGradient(const Vector& x) const override {
-        return (x > 0).;
+        return Matrix((x > 0).asDiagonal());
     }
 };
 
@@ -61,10 +80,10 @@ class ImplActivationFunction<TBase, Sigmoid> : public TBase {
 public:
     using CBase::CBase;
     Vector Compute(const Vector& x) const override {
-        return 1 / (1 + (-x).array().exp());
+        return Vector(1 / (1 + (-x).array().exp()));
     }
     Matrix ComputeGradient(const Vector& x) const override {
-        return (Compute(x) * (1 - Compute(x))).asDiagonal();
+        return (Compute(x).cwiseProduct(1 - Compute(x))).asDiagonal();
     }
 };
 
@@ -75,19 +94,19 @@ class ImplActivationFunction<TBase, Tanh> : public TBase {
 public:
     using CBase::CBase;
     Vector Compute(const Vector& x) const override {
-        return x.cwiseTanh();
+        return Vector(x.array().tanh());
     }
     Matrix ComputeGradient(const Vector& x) const override {
-        return (1 - Compute(x)) * (1 + Compute(x))
+        return ((1 - Compute(x)).cwiseProduct(1 + Compute(x))).asDiagonal()
     }
 };
 
 using ActivationFunctionT = CAnyObject<IActivationFunction, ImplActivationFunction>;
 
-}  // namespace NeuralNetworkDetail
+}  // namespace NNActivationFuncDetail
 
-class ActivationFunction : public NeuralNetworkDetail::ActivationFunctionT {
-    using CBase = NeuralNetworkDetail::ActivationFunctionT;
+class ActivationFunction : public NNActivationFuncDetail::ActivationFunctionT {
+    using CBase = NNActivationFuncDetail::ActivationFunctionT;
 
 public:
     using CBase::CBase;
