@@ -1,83 +1,83 @@
-#include "NeuralNetwork.h"
+#include <NeuralNetwork.h>
+#include <iostream>
 
 namespace NeuralNetwork {
 
-NeuralNetwork::NeuralNetwork(std::initializer_list<Layer> layers) : layers_(layers) {
-    for (int32_t i = 0; i + 1 < layers_.ssize(); ++i) {
+Net::Net(std::initializer_list<Layer> layers) : layers_(layers) {
+    for (int32_t i = 0; i + 1 < std::ssize(layers_); ++i) {
         assert(layers_[i].GetOut() == layers_[i + 1].GetIn() &&
                "Out and in dimensions of adjacent layers are not equal");
     }
 }
 
-void NeuralNetwork::Fit(const DataLoader& train_data_loader, const Optimizer& optimizer,
-         const LossFunction& loss_function, int32_t epochs) {
-    assert(loss_function.IsDefined() && "Loss function is not defined");
-    assert(optimizer.IsDefined() && "Optimizer is not defined");
+void Net::Fit(const DataLoader& train_data_loader, const Optimizer& optimizer,
+              const LossFunction& loss_function, int32_t epochs, const VectorSet& X_train,
+              const VectorSet& y_train) {
+    assert(loss_function.isDefined() && "Loss function is not defined");
+    assert(optimizer.isDefined() && "Optimizer is not defined");
     assert(epochs > 0 && "Number of epochs must be positive number");
 
     for (int32_t i = 0; i < epochs; ++i) {
-        for (const auto& batch : train_data_loader) {
+        for (const Batch& batch : train_data_loader) {
             BackPropogate(batch, optimizer, loss_function);
         }
     }
 }
-Vector NeuralNetwork::Predict(const Vector& x) {
-	Vector pred = x;
-	for (int32_t i = 0; i < layers_.ssize(); ++i) {
-		pred = layers_[i].Compute(pred);
-	}
+Vector Net::Predict(const Vector& x) const {
+    Vector pred = x;
+    for (int32_t i = 0; i < std::ssize(layers_); ++i) {
+        pred = layers_[i].Compute(pred);
+    }
     return pred;
 }
-VectorSet NeuralNetwork::Predict(const VectorSet& X) {
+VectorSet Net::Predict(const VectorSet& X) const {
     VectorSet preds;
-    for (const auto& x : X) {
-    	preds.push_back(Predict(x));
+    for (const Vector& x : X) {
+        preds.push_back(Predict(x));
     }
     return preds;
 }
 
-VectorSet NeuralNetwork::ComputeOuts(const Vector& x) {
+VectorSet Net::ComputeOuts(const Vector& x) const {
     VectorSet outs = {x};
 
-    for (int32_t i = 0; i < layers_.size(); ++i) {
+    for (int32_t i = 0; i < std::ssize(layers_); ++i) {
         outs.push_back(layers_[i].Compute(outs.back()));
     }
 
-    return out;
+    return outs;
 }
 
-void NeuralNetwork::BackPropogate(const Batch& batch, const Optimizer& optimizer, const LossFunction& loss_function) {
-    int32_t batch_size = batch.X.ssize();
-    int32_t layers_size = layers_.ssize();
+void Net::BackPropogate(const Batch& batch, const Optimizer& optimizer,
+                        const LossFunction& loss_function) {
+    int32_t batch_size = batch.GetSize();
+    int32_t layers_size = std::ssize(layers_);
 
-    std::vector<Matrix> weights_grad(layers_size);
+    std::vector<Matrix> weights_grads(layers_size);
     VectorSet bias_grads(layers_size);
 
     for (int32_t i = 0; i < layers_size; ++i) {
-        weights_grads[i].resize(layers_[i].GetOut(), layers_[i].GetIn());
-        bias_grads[i].resize(layers_[i].GetOut());
+        weights_grads[i] = Matrix::Zero(layers_[i].GetOut(), layers_[i].GetIn());
+        bias_grads[i] = Vector::Zero(layers_[i].GetOut());
     }
 
-    for (int32_t i = 0; i < batch_size; ++i) {
-    	Vector x = batch.X[i];
-    	Vector y = batch.y[i];
-
+    for (const auto& [x, y] : batch) {
         VectorSet layer_outs = ComputeOuts(x);
-        RowVector last_grad = loss_function.ComputeGradient(layer_outs.back(), y);
+        RowVector last_grad = loss_function->ComputeGradient(layer_outs.back(), y);
 
-        for (int32_t i = layers_size - 1; i >= 1; --i) {
-            Matrix jacobian = layers_[i].GetActFuncJacobian(layer_outs[i]);
+        for (int32_t i = layers_size - 1; i >= 0; --i) {
+            Matrix jacobian = layers_[i].GetActFuncJacobian(layer_outs[i + 1]);
 
-            Matrix weights_grad = (layer_outs[i - 1] * last_grad * jacobian).transpose();
-            Vector bias_grad = (layer_outs[i - 1] * jacobian).transpose();
-            last_grad = last_grad * jacobian * layers_.GetWeights();
+            Matrix weights_grad = (layer_outs[i] * last_grad * jacobian).transpose();
+            Vector bias_grad = (last_grad * jacobian).transpose();
+
+            last_grad *= jacobian * layers_[i].GetWeights();
 
             weights_grads[i] += weights_grad / batch_size;
             bias_grads[i] += bias_grad / batch_size;
         }
     }
-
-    optimizer.DoStep(&layers_, weights_grads, bias_grads);
+    optimizer->DoStep(&layers_, weights_grads, bias_grads);
 }
 
 }  // namespace NeuralNetwork

@@ -11,9 +11,10 @@ class Layer {
     ActivationFunction activation_function_;
 
 public:
-    template <typename RandGen, typename RandNumGen>
-    Layer(Index in, Index out, ActivationFunction activation_function = Id()
-          RandGen rand_gen = Eigen::Rand::NormalGen<DataType>{}, RandNumGen urng = Eigen::Rand::Vmt19937_64{42})
+    template <typename RandGen = Eigen::Rand::NormalGen<DataType>,
+              typename RandNumGen = Eigen::Rand::Vmt19937_64>
+    Layer(Index in, Index out, ActivationFunction activation_function = Id(),
+          RandGen rand_gen = RandGen{}, RandNumGen urng = RandNumGen{})
         : activation_function_(activation_function) {
         assert(activation_function_.isDefined() && "Activation function is not defined");
         assert(in > 0 && out > 0 && "Layer dimensions must be positive numbers");
@@ -23,6 +24,9 @@ public:
 
         weights_ = rand_gen.generateLike(weights_, urng);
         bias_ = rand_gen.generateLike(bias_, urng);
+
+        weights_ = Matrix::Ones(weights_.rows(), weights_.cols());
+        bias_ = Vector::Ones(bias_.size());
     }
     Index GetIn() const {
         return weights_.cols();

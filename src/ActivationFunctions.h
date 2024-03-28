@@ -80,10 +80,10 @@ class ImplActivationFunction<TBase, Sigmoid> : public TBase {
 public:
     using CBase::CBase;
     Vector Compute(const Vector& x) const override {
-        return Vector(1 / (1 + (-x).array().exp()));
+        return x.unaryExpr([](DataType xi) { return 1 / (1 + exp(-xi)); });
     }
     Matrix ComputeGradient(const Vector& x) const override {
-        return (Compute(x).cwiseProduct(1 - Compute(x))).asDiagonal();
+        return (Compute(x).cwiseProduct(Vector::Ones(x.size()) - Compute(x))).asDiagonal();
     }
 };
 
@@ -94,10 +94,12 @@ class ImplActivationFunction<TBase, Tanh> : public TBase {
 public:
     using CBase::CBase;
     Vector Compute(const Vector& x) const override {
-        return Vector(x.array().tanh());
+        return x.unaryExpr([](DataType xi) { return tanh(xi); });
     }
     Matrix ComputeGradient(const Vector& x) const override {
-        return ((1 - Compute(x)).cwiseProduct(1 + Compute(x))).asDiagonal();
+        Vector l_fact = Vector::Ones(x.size()) - Compute(x);
+        Vector r_fact = Vector::Ones(x.size()) + Compute(x);
+        return (l_fact.cwiseProduct(r_fact)).asDiagonal();
     }
 };
 

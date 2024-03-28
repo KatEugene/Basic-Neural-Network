@@ -1,69 +1,62 @@
 #pragma once
 
 #include <tuple>
+#include <GlobalUsings.h>
 
 namespace NeuralNetwork {
 
-struct Batch {
-	VectorSet X;
-	VectorSet y;
-}
+class Batch {
+    class BIterator {
+        using Iterator = VectorSet::const_iterator;
 
-std::tuple<VectorSet, VectorSet, VectorSet, VectorSet> TrainTestSplit(const VectorSet& dataset_X, const VectorSet& dataset_y, DataType test_part) {
-	int32_t test_size = dataset_X.size() * test_part;
-	VectorSet X_train, y_train, X_test, y_test;
-	X_test = {dataset_X.begin(), dataset_X.begin() + test_size};
-	y_test = {dataset_y.begin(), dataset_y.begin() + test_size};
-	X_train = {dataset_X.begin() + test_size, dataset_X.end()};
-	y_train = {dataset_y.begin() + test_size, dataset_y.end()};
-	return std::tie(X_test, y_test, X_train, y_train);
-}
+        Iterator cur_iter_X_, cur_iter_y_;
 
-class DataLoader {
-    BatchIterator begin_, end_;
-	
-	template<typename Iterator>
-	class BatchIterator {
-	public:
-	    BatchIterator(Iterator iterator_begin, Iterator iterator_end)
-	        : iterator_end_(iterator_begin), global_end_(iterator_end) {
-	        ShiftEnd();
-	    }
-	    auto operator*() const {
-	        return IteratorRange(iterator_begin_, iterator_end_);
-	    }
-	    BatchIterator& operator++() {
-	        ShiftEnd();
-	        return *this;
-	    }
-	    bool operator!=(const BatchIterator& other) const {
-	        return iterator_begin_ != other.iterator_begin_;
-	    }
-
-	private:
-	    void ShiftEnd() {
-	        iterator_begin_ = iterator_end_;
-	        while (iterator_end_ != global_end_ && *iterator_end_ == *iterator_begin_) {
-	            ++iterator_end_;
-	        }
-	    }
-
-	    Iterator iterator_begin_;
-	    Iterator iterator_end_;
-	    Iterator global_end_;
-	};
+    public:
+        BIterator(Iterator begin_X, Iterator begin_y);
+        std::pair<Vector, Vector> operator*();
+        BIterator& operator++();
+        bool operator!=(const BIterator& other) const;
+    };
 
 public:
-	DataLoader(VectorSet ) {
-
-	}
-	BatchIterator begin() const {  // NOLINT
-        return BatchIterator();
+    Batch(const VectorSet& batch_X, const VectorSet& batch_y);
+    BIterator begin() const;
+    BIterator end() const;
+    SizeType GetSize() const {
+        return std::ssize(batch_X_);
     }
 
-    BatchIterator end() const {  // NOLINT
-        return BatchIterator();
-    }
+    VectorSet batch_X_, batch_y_;
+    BIterator begin_, end_;
 };
 
-} // namespace NeuralNetwork
+std::tuple<VectorSet, VectorSet, VectorSet, VectorSet> TrainTestSplit(const VectorSet& dataset_X,
+                                                                      const VectorSet& dataset_y,
+                                                                      DataType test_part);
+
+class DataLoader {
+
+    class BatchIterator {
+        using Iterator = VectorSet::const_iterator;
+
+        Iterator begin_X_, begin_y_;
+        SizeType cur_pos_ = 0;
+        SizeType batch_size_;
+        SizeType max_size_;
+
+    public:
+        BatchIterator(Iterator begin_X, Iterator begin_y, SizeType batch_size, SizeType max_size);
+        Batch operator*();
+        BatchIterator& operator++();
+        bool operator!=(const BatchIterator& other) const;
+    };
+
+public:
+    DataLoader(const VectorSet& dataset_X, const VectorSet& dataset_y, SizeType batch_size);
+    BatchIterator begin() const;
+    BatchIterator end() const;
+
+    BatchIterator begin_, end_;
+};
+
+}  // namespace NeuralNetwork

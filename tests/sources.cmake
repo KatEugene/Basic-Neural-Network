@@ -1,6 +1,6 @@
-#include_directories("../src")
+include_directories("${CMAKE_SOURCE_DIR}/src")
 
 add_executable(
     test_neural_network
-    tests/test_neural_network.cpp
+    tests/TestNeuralNetwork.cpp
 )

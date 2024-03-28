@@ -97,185 +97,189 @@
 // Declaration of IEmpty
 //---------------------------------------------------------------------------
 
-
 // I need this to avoid explicit declaration of a virtual distructor
 // on the user side
 class IEmpty {
 protected:
-  virtual ~IEmpty() = default;
+    virtual ~IEmpty() = default;
 };
 //---------------------------------------------------------------------------
 // Declaration of CAnyObject
 //---------------------------------------------------------------------------
 
-template< template<class>class TInterface,
-          template<class, class>class TImplementation>
+template <template <class> class TInterface, template <class, class> class TImplementation>
 class CAnyObject {
-  class IObjectStored;
-  using CStoredPtr = std::unique_ptr<IObjectStored>;
-  template<class T>
-  using CObjType = std::remove_reference_t<T>;
+    class IObjectStored;
+    using CStoredPtr = std::unique_ptr<IObjectStored>;
+    template <class T>
+    using CObjType = std::remove_reference_t<T>;
+
 public:
-  CAnyObject() = default;
+    CAnyObject() = default;
 
-  template<class T>
-  CAnyObject(T&& Object)
-    : pIObject_(std::make_unique<CObjectStored<CObjType<T>>>(std::forward<T>(Object))) {
-  }
+    template <class T>
+    CAnyObject(T&& Object)
+        : pIObject_(std::make_unique<CObjectStored<CObjType<T>>>(std::forward<T>(Object))) {
+    }
 
-  template<class T, class... TArgs>
-  CAnyObject(std::in_place_type_t<T>,TArgs&& ... args)
-    : pIObject_(std::make_unique<CObjectStored<T>>(std::forward<TArgs>(args)...)) {}
+    template <class T, class... TArgs>
+    CAnyObject(std::in_place_type_t<T>, TArgs&&... args)
+        : pIObject_(std::make_unique<CObjectStored<T>>(std::forward<TArgs>(args)...)) {
+    }
 
+    CAnyObject(const CAnyObject& Other)
+        : pIObject_(Other.pIObject_ ? Other.pIObject_->_make_copy() : nullptr) {
+    }
 
-  CAnyObject(const CAnyObject& Other)
-    : pIObject_(Other.pIObject_ ? Other.pIObject_->_make_copy() : nullptr) {
-  }
+    CAnyObject(CAnyObject&& Other) noexcept = default;
 
-  CAnyObject(CAnyObject&& Other) noexcept = default;
+    CAnyObject& operator=(const CAnyObject& Other) {
+        return *this = CAnyObject(Other);
+    }
 
-  CAnyObject& operator=(const CAnyObject& Other) {
-    return *this = CAnyObject(Other);
-  }
+    CAnyObject& operator=(CAnyObject&& Other) noexcept = default;
 
-  CAnyObject& operator=(CAnyObject&& Other) noexcept = default;
+    bool isDefined() const {
+        return pIObject_.operator bool();
+    }
 
-  bool isDefined() const {
-    return pIObject_.operator bool();
-  }
+    TInterface<IEmpty>* operator->() {
+        return pIObject_.get();
+    }
 
-  TInterface<IEmpty>* operator->() {
-    return pIObject_.get();
-  }
+    TInterface<IEmpty>* operator->() const {
+        return pIObject_.get();
+    }
 
-  TInterface<IEmpty>* operator->() const {
-    return pIObject_.get();
-  }
+    template <class TObject, class... TArgs>
+    void emplace(TArgs&&... args) {
+        pIObject_ = std::make_unique<CObjectStored<TObject>>(std::forward<TArgs>(args)...);
+    }
 
-  template<class TObject, class... TArgs>
-  void emplace(TArgs&& ... args) {
-    pIObject_ = std::make_unique<CObjectStored<TObject>>(std::forward<TArgs>(args)...);
-  }
+    void clear() {
+        pIObject_.reset();
+    }
 
-  void clear() {
-    pIObject_.reset();
-  }
 protected:
-  ~CAnyObject() = default;
+    ~CAnyObject() = default;
+
 private:
-  //---------------------------------------------------------------------------
-  // Declaration of CAnyObject::IObjectStored
-  //---------------------------------------------------------------------------
+    //---------------------------------------------------------------------------
+    // Declaration of CAnyObject::IObjectStored
+    //---------------------------------------------------------------------------
 
-  class IObjectStored : public TInterface<IEmpty> {
-  public:
-    inline ~IObjectStored() override = default;
-  protected:
-    friend class CAnyObject;
-    virtual CStoredPtr _make_copy() const = 0;
-  };
-  //---------------------------------------------------------------------------
-  // Declaration of CAnyObject::CObjectKeeper
-  //---------------------------------------------------------------------------
+    class IObjectStored : public TInterface<IEmpty> {
+    public:
+        inline ~IObjectStored() override = default;
 
-  template<class TObject>
-  class CObjectKeeper : public IObjectStored {
-  public:
-    using CObjectType = TObject;
+    protected:
+        friend class CAnyObject;
+        virtual CStoredPtr _make_copy() const = 0;
+    };
+    //---------------------------------------------------------------------------
+    // Declaration of CAnyObject::CObjectKeeper
+    //---------------------------------------------------------------------------
 
-    CObjectKeeper(const TObject& Object)
-      : Object_(Object) {
-    }
+    template <class TObject>
+    class CObjectKeeper : public IObjectStored {
+    public:
+        using CObjectType = TObject;
 
-    CObjectKeeper(TObject&& Object) noexcept
-      : Object_(std::move(Object)) {
-    }
+        CObjectKeeper(const TObject& Object) : Object_(Object) {
+        }
 
-    ~CObjectKeeper() override = default;
+        CObjectKeeper(TObject&& Object) noexcept : Object_(std::move(Object)) {
+        }
 
-    template<class... TArgs>
-    CObjectKeeper(TArgs&& ... args) : Object_(std::forward<TArgs>(args)...) {}
+        ~CObjectKeeper() override = default;
 
-  protected:
-    TObject& Object() {
-      return Object_;
-    }
+        template <class... TArgs>
+        CObjectKeeper(TArgs&&... args) : Object_(std::forward<TArgs>(args)...) {
+        }
 
-    const TObject& Object() const {
-      return Object_;
-    }
-  private:
-    TObject Object_;
-  };
+    protected:
+        TObject& Object() {
+            return Object_;
+        }
 
-  // Specialization for arrays
-  template<class T, size_t Tsize>
-  class CObjectKeeper<T[Tsize]> : public IObjectStored {
-  public:
-    using CBaseType = T;
-    using CObjectType = CBaseType[Tsize];
+        const TObject& Object() const {
+            return Object_;
+        }
 
-    CObjectKeeper(const CObjectType& Object)
-      : CObjectKeeper(Object, std::make_integer_sequence <size_t, Tsize> {}) {
-    }
+    private:
+        TObject Object_;
+    };
 
-    CObjectKeeper(CObjectType&& Object) noexcept
-      : CObjectKeeper(std::move(Object), std::make_integer_sequence <size_t, Tsize> {}) {
-    }
+    // Specialization for arrays
+    template <class T, size_t Tsize>
+    class CObjectKeeper<T[Tsize]> : public IObjectStored {
+    public:
+        using CBaseType = T;
+        using CObjectType = CBaseType[Tsize];
 
-    ~CObjectKeeper() override = default;
+        CObjectKeeper(const CObjectType& Object)
+            : CObjectKeeper(Object, std::make_integer_sequence<size_t, Tsize>{}) {
+        }
 
-  protected:
-    CObjectType& Object() {
-      return Object_;
-    }
+        CObjectKeeper(CObjectType&& Object) noexcept
+            : CObjectKeeper(std::move(Object), std::make_integer_sequence<size_t, Tsize>{}) {
+        }
 
-    const CObjectType& Object() const {
-      return Object_;
-    }
-  private:
-    template<size_t... TIndex>
-    CObjectKeeper(const CObjectType& Object, std::integer_sequence<size_t, TIndex...>)
-      : Object_{Object[TIndex]...} {}
+        ~CObjectKeeper() override = default;
 
-    template<size_t... TIndex>
-    CObjectKeeper(CObjectType&& Object, std::integer_sequence<size_t, TIndex...>) noexcept
-      : Object_ {
-      std::move(Object[TIndex])...
-    } {}
+    protected:
+        CObjectType& Object() {
+            return Object_;
+        }
 
+        const CObjectType& Object() const {
+            return Object_;
+        }
 
-    CObjectType Object_;
-  };
+    private:
+        template <size_t... TIndex>
+        CObjectKeeper(const CObjectType& Object, std::integer_sequence<size_t, TIndex...>)
+            : Object_{Object[TIndex]...} {
+        }
 
+        template <size_t... TIndex>
+        CObjectKeeper(CObjectType&& Object, std::integer_sequence<size_t, TIndex...>) noexcept
+            : Object_{std::move(Object[TIndex])...} {
+        }
 
-  //---------------------------------------------------------------------------
-  // Declaration of CAnyObject::CObjectStored
-  //---------------------------------------------------------------------------
+        CObjectType Object_;
+    };
 
-  template<class TObject>
-  class CObjectStored :
-    public TImplementation<CObjectKeeper<TObject>, TObject> {
-    using CBase = TImplementation<CObjectKeeper<TObject>, TObject>;
-  public:
-    using CBase::CBase;
+    //---------------------------------------------------------------------------
+    // Declaration of CAnyObject::CObjectStored
+    //---------------------------------------------------------------------------
 
-    inline ~CObjectStored() override = default;
-  protected:
-    CStoredPtr _make_copy() const override {
-      return std::make_unique<CObjectStored>(*this);
-    }
-  };
+    template <class TObject>
+    class CObjectStored : public TImplementation<CObjectKeeper<TObject>, TObject> {
+        using CBase = TImplementation<CObjectKeeper<TObject>, TObject>;
+
+    public:
+        using CBase::CBase;
+
+        inline ~CObjectStored() override = default;
+
+    protected:
+        CStoredPtr _make_copy() const override {
+            return std::make_unique<CObjectStored>(*this);
+        }
+    };
+
 protected:
-  CStoredPtr& StoredPtr() {
-    return pIObject_;
-  }
+    CStoredPtr& StoredPtr() {
+        return pIObject_;
+    }
 
-  const CStoredPtr& StoredPtr() const {
-    return pIObject_;
-  }
+    const CStoredPtr& StoredPtr() const {
+        return pIObject_;
+    }
+
 private:
-  CStoredPtr pIObject_;
+    CStoredPtr pIObject_;
 };
 //---------------------------------------------------------------------------
-#endif // ANYOBJECT_H
+#endif  // ANYOBJECT_H

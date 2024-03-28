@@ -8,14 +8,14 @@ namespace NeuralNetwork {
 
 class SGD {
     // Stochastic gradient descent
-	
-	DataType learning_rate_;
+
+    DataType learning_rate_;
 
 public:
     SGD(DataType learning_rate = 1e-2) : learning_rate_(learning_rate) {
     }
     DataType GetLearningRate() const {
-    	return learning_rate_;
+        return learning_rate_;
     }
 };
 
@@ -36,7 +36,7 @@ public:
     using CBase::CBase;
 
     void DoStep(std::vector<Layer>* layers, const std::vector<Matrix>& weights_grads,
-                        const std::vector<Vector>& bias_grads) const override {
+                const std::vector<Vector>& bias_grads) const override {
         assert(false && "Not optimizer");
     }
 };
@@ -49,24 +49,23 @@ public:
     using CBase::CBase;
 
     void DoStep(std::vector<Layer>* layers, const std::vector<Matrix>& weights_grads,
-                        const std::vector<Vector>& bias_grads) const override {
-    	DataType learning_rate = CBase::Object().GetLearningRate();
+                const std::vector<Vector>& bias_grads) const override {
+        DataType learning_rate = CBase::Object().GetLearningRate();
 
-    	for (size_t i = 0; i < layers->size(); ++i) {
-    		layers->at(i).GetWeightsReference() -= learning_rate * weights_grads[i];
-    		layers->at(i).GetBiasReference() -= learning_rate * bias_grads[i];
+        for (size_t i = 0; i < layers->size(); ++i) {
+            layers->at(i).GetWeightsReference() -= learning_rate * weights_grads[i];
+            layers->at(i).GetBiasReference() -= learning_rate * bias_grads[i];
+            /*
+            Matrix updated_weights = layers[i].GetWeights();
+            Vector updated_bias = layers[i].GetBias();
 
-    		/*
-			Matrix updated_weights = layers[i].GetWeights();
-    		Vector updated_bias = layers[i].GetBias();
+            updated_weights -= learning_rate_ * weights_grads[i];
+            updated_bias -= learning_rate_ * bias_grads[i];
 
-    		updated_weights -= learning_rate_ * weights_grads[i];
-    		updated_bias -= learning_rate_ * bias_grads[i];
-
-    		layers[i].SetWeights(updated_weights);
-    		layers[i].SetBias(updated_bias);
-    		*/
-    	}
+            layers[i].SetWeights(updated_weights);
+            layers[i].SetBias(updated_bias);
+            */
+        }
     }
 };
 
