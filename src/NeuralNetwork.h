@@ -2,11 +2,11 @@
 
 #include <vector>
 
-#include <Layer.h>
-#include <LossFunctions.h>
-#include <Optimizers.h>
-#include <GlobalUsings.h>
-#include <Utils.h>
+#include "Layer.h"
+#include "LossFunctions.h"
+#include "Optimizers.h"
+#include "GlobalUsings.h"
+#include "Utils.h"
 
 namespace NeuralNetwork {
 

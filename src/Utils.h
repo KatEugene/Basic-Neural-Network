@@ -1,7 +1,7 @@
 #pragma once
 
 #include <tuple>
-#include <GlobalUsings.h>
+#include "GlobalUsings.h"
 
 namespace NeuralNetwork {
 

@@ -7,7 +7,8 @@
 using namespace NeuralNetwork;
 
 TEST(NNCorrection, PredictSinx) {
-    Eigen::Rand::Vmt19937_64 urng{42};
+    int32_t seed = 42;
+    Eigen::Rand::Vmt19937_64 urng{seed};
 
     SizeType sample_size = 1e5;
     SizeType epochs = 100;

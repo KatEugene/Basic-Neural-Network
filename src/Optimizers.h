@@ -55,16 +55,6 @@ public:
         for (size_t i = 0; i < layers->size(); ++i) {
             layers->at(i).GetWeightsReference() -= learning_rate * weights_grads[i];
             layers->at(i).GetBiasReference() -= learning_rate * bias_grads[i];
-            /*
-            Matrix updated_weights = layers[i].GetWeights();
-            Vector updated_bias = layers[i].GetBias();
-
-            updated_weights -= learning_rate_ * weights_grads[i];
-            updated_bias -= learning_rate_ * bias_grads[i];
-
-            layers[i].SetWeights(updated_weights);
-            layers[i].SetBias(updated_bias);
-            */
         }
     }
 };
