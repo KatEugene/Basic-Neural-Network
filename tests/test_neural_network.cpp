@@ -1,11 +1,11 @@
 #include <gtest/gtest.h>
 
-#include <NeuralNetwork.h>
-#include <GlobalUsings.h>
+#include "../src/NeuralNetwork.h"
+#include "../src/GlobalUsings.h"
 
 using namespace NeuralNetwork;
 
-TEST("Predict sin(x)") {
+TEST_CASE("Predict sin(x)") {
 	Eigen::Rand::Vmt19937_64 urng{42};
 	int32_t sample_size = 1e5; 
 
@@ -17,7 +17,7 @@ TEST("Predict sin(x)") {
 		y[i] = 2 * X[i];
 	}
 
-	auto [X_train, y_train, X_test, y_test] = TrainTestSplit(X, y, test_size=0.3);
+	auto [X_train, y_train, X_test, y_test] = TrainTestSplit(X, y, 0.3);
 
 	DataLoader train_data_loader(X_train, y_train);
 
@@ -26,7 +26,7 @@ TEST("Predict sin(x)") {
 	Layer layer3(8, 1, Id());
 
 	NeuralNetwork basic_nn({layer1, layer2, layer3});
-	Optimizer optimizer = SGD(learning_rate=4e-2);
+	Optimizer optimizer = SGD(4e-2);
 	LossFunction loss_function = MSE();
 
 	basic_nn.fit(train_data_loader, optimizer, loss_function, 100);

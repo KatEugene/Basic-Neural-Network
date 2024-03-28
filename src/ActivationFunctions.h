@@ -1,7 +1,7 @@
 #pragma once
 
-#include <AnyObject.h>
-#include <GlobalUsing.h>
+#include "AnyObject.h"
+#include "GlobalUsings.h"
 
 namespace NeuralNetwork {
 
@@ -69,7 +69,7 @@ public:
         return x.cwiseMax(0);
     }
     Matrix ComputeGradient(const Vector& x) const override {
-        return Matrix((x > 0).asDiagonal());
+        return Matrix((x.array() > 0).matrix().asDiagonal());
     }
 };
 
@@ -97,7 +97,7 @@ public:
         return Vector(x.array().tanh());
     }
     Matrix ComputeGradient(const Vector& x) const override {
-        return ((1 - Compute(x)).cwiseProduct(1 + Compute(x))).asDiagonal()
+        return ((1 - Compute(x)).cwiseProduct(1 + Compute(x))).asDiagonal();
     }
 };
 

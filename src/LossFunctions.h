@@ -1,8 +1,9 @@
 #pragma once
 
 #include <vector>
-#include <AnyObject.h>
-#include <GlobalUsing.h>
+
+#include "AnyObject.h"
+#include "GlobalUsings.h"
 
 namespace NeuralNetwork {
 

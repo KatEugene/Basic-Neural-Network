@@ -1,4 +1,4 @@
-include_directories("../src")
+#include_directories("../src")
 
 add_executable(
     test_neural_network

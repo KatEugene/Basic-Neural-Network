@@ -9,40 +9,60 @@ struct Batch {
 	VectorSet y;
 }
 
-std::tuple<VectorSet, VectorSet, VectorSet, VectorSet> TrainTestSplit(VectorSet dataset_X, VectorSet dataset_y, test_size) {
-
+std::tuple<VectorSet, VectorSet, VectorSet, VectorSet> TrainTestSplit(const VectorSet& dataset_X, const VectorSet& dataset_y, DataType test_part) {
+	int32_t test_size = dataset_X.size() * test_part;
+	VectorSet X_train, y_train, X_test, y_test;
+	X_test = {dataset_X.begin(), dataset_X.begin() + test_size};
+	y_test = {dataset_y.begin(), dataset_y.begin() + test_size};
+	X_train = {dataset_X.begin() + test_size, dataset_X.end()};
+	y_train = {dataset_y.begin() + test_size, dataset_y.end()};
+	return std::tie(X_test, y_test, X_train, y_train);
 }
 
 class DataLoader {
+    BatchIterator begin_, end_;
+	
+	template<typename Iterator>
 	class BatchIterator {
 	public:
-	    BatchIterator() = default;
-	    BatchIterator(int64_t pos, size_t step) : pos_(pos), step_(step) {
+	    BatchIterator(Iterator iterator_begin, Iterator iterator_end)
+	        : iterator_end_(iterator_begin), global_end_(iterator_end) {
+	        ShiftEnd();
 	    }
-	    Batch operator*() const {
-	        return pos_;
+	    auto operator*() const {
+	        return IteratorRange(iterator_begin_, iterator_end_);
 	    }
 	    BatchIterator& operator++() {
-	        pos_ += step_;
+	        ShiftEnd();
 	        return *this;
 	    }
 	    bool operator!=(const BatchIterator& other) const {
-	        return pos_ < other.pos_;
+	        return iterator_begin_ != other.iterator_begin_;
 	    }
 
 	private:
-	    int64_t pos_;
-	    size_t step_;
+	    void ShiftEnd() {
+	        iterator_begin_ = iterator_end_;
+	        while (iterator_end_ != global_end_ && *iterator_end_ == *iterator_begin_) {
+	            ++iterator_end_;
+	        }
+	    }
+
+	    Iterator iterator_begin_;
+	    Iterator iterator_end_;
+	    Iterator global_end_;
 	};
 
-    Iterator begin_, end_;
 public:
+	DataLoader(VectorSet ) {
+
+	}
 	BatchIterator begin() const {  // NOLINT
-        return begin_;
+        return BatchIterator();
     }
 
     BatchIterator end() const {  // NOLINT
-        return end_;
+        return BatchIterator();
     }
 };
 

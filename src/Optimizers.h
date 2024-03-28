@@ -1,8 +1,8 @@
 #pragma once
 
-#include <AnyObject.h>
-#include <GlobalUsing.h>
-#include <Layer.h>
+#include "AnyObject.h"
+#include "GlobalUsings.h"
+#include "Layer.h"
 
 namespace NeuralNetwork {
 
@@ -50,7 +50,7 @@ public:
 
     void DoStep(std::vector<Layer>* layers, const std::vector<Matrix>& weights_grads,
                         const std::vector<Vector>& bias_grads) const override {
-    	DataType learning_rate = Cbase::Object().GetLearningRate();
+    	DataType learning_rate = CBase::Object().GetLearningRate();
 
     	for (size_t i = 0; i < layers->size(); ++i) {
     		layers->at(i).GetWeightsReference() -= learning_rate * weights_grads[i];

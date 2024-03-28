@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.14)
 
 project(BasicNeuralNetwork)
 
@@ -11,26 +11,32 @@ FetchContent_Declare(
   URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
 )
 FetchContent_Declare(
-  benchmark
-  GIT_REPOSITORY https://github.com/google/benchmark.git
-  GIT_TAG 344117638c8ff7e239044fd0fa7085839fc03021
+  eigen
+  GIT_REPOSITORY https://github.com/ValveSoftware/eigen.git
+  GIT_TAG 3147391d946bb4b6c68edd901f2add6ac1f31f8c
 )
 FetchContent_Declare(
-  xsimd
-  GIT_REPOSITORY https://github.com/xtensor-stack/xsimd.git
-  GIT_TAG c1247bffa8fc36de7380a5cd42673a3b32f74c97
+  EigenRand
+  GIT_REPOSITORY https://github.com/bab2min/EigenRand.git
+  GIT_TAG 13582eb26e6f7f67502c1732f13ad37498152be1
 )
 
 FetchContent_MakeAvailable(googletest)
-FetchContent_MakeAvailable(benchmark)
-FetchContent_MakeAvailable(xsimd)
+FetchContent_MakeAvailable(eigen)
+FetchContent_MakeAvailable(EigenRand)
 
 include(src/sources.cmake)
 include(tests/sources.cmake)
 
 enable_testing()
 
-target_link_libraries(test_neural_network neural_network GTest::gtest_main)
+target_link_libraries(
+  test_neural_network 
+  neural_network
+  GTest::gtest_main
+  eigen
+  EigenRand
+)
 
 include(GoogleTest)
 gtest_discover_tests(test_neural_network)
