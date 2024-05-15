@@ -62,4 +62,13 @@ public:
     Vector ComputeGradient(const Vector& predicted, const Vector& expected) const;
 };
 
+class CrossEntropy {
+    // Given vectors x, y in R^n, computes sum(abs(x_i - y_i))
+
+public:
+    DataType Compute(const Vector& predicted, const Vector& expected) const;
+    DataType Compute(const VectorSet& predicted, const VectorSet& expected) const;
+    Vector ComputeGradient(const Vector& predicted, const Vector& expected) const;
+};
+
 }  // namespace NeuralNetwork

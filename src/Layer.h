@@ -3,6 +3,7 @@
 #include "ActivationFunctions.h"
 #include "GlobalUsings.h"
 #include "Utils.h"
+#include "Random.h"
 
 namespace NeuralNetwork {
 

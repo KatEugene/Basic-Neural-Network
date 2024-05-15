@@ -9,4 +9,5 @@ add_library(
 	src/ActivationFunctions.cpp
 	src/LossFunctions.cpp
 	src/Optimizers.cpp
+	src/DataLoader.cpp
 )

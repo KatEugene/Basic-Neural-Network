@@ -13,7 +13,7 @@ DataType MSE::Compute(const VectorSet& predicted, const VectorSet& expected) con
     return sum / predicted.size();
 }
 Vector MSE::ComputeGradient(const Vector& predicted, const Vector& expected) const {
-    return 2 * (predicted - expected);
+    return 2 * (predicted - expected) / predicted.size();
 }
 
 DataType MAE::Compute(const Vector& predicted, const Vector& expected) const {
@@ -27,7 +27,21 @@ DataType MAE::Compute(const VectorSet& predicted, const VectorSet& expected) con
     return sum / predicted.size();
 }
 Vector MAE::ComputeGradient(const Vector& predicted, const Vector& expected) const {
-    return Vector((predicted - expected).array().sign());
+    return Vector((predicted - expected).array().sign()) / predicted.size();
+}
+
+DataType CrossEntropy::Compute(const Vector& predicted, const Vector& expected) const {
+    return -(expected.array() * predicted.array().log()).sum();
+}
+DataType CrossEntropy::Compute(const VectorSet& predicted, const VectorSet& expected) const {
+    DataType sum = 0;
+    for (size_t i = 0; i < predicted.size(); ++i) {
+        sum += Compute(predicted[i], expected[i]);
+    }
+    return sum / predicted.size();
+}
+Vector CrossEntropy::ComputeGradient(const Vector& predicted, const Vector& expected) const {
+    return Vector(-(expected.array() / predicted.array()));
 }
 
 }  // namespace NeuralNetwork

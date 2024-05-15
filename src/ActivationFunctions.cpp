@@ -13,7 +13,7 @@ Vector ReLU::Compute(const Vector& x) const {
     return x.cwiseMax(0);
 }
 Matrix ReLU::ComputeGradient(const Vector& x) const {
-    return Matrix((x.array() > 0).cast<double>().matrix().asDiagonal());
+    return Matrix((x.array() > 0).cast<DataType>().matrix().asDiagonal());
 }
 
 Vector Sigmoid::Compute(const Vector& x) const {
@@ -33,7 +33,7 @@ Matrix Tanh::ComputeGradient(const Vector& x) const {
 }
 
 Vector Softmax::Compute(const Vector& x) const {
-    Vector exps = x.array().exp();
+    Vector exps = (x.array() - x.maxCoeff()).exp();
     return exps / exps.sum();
 }
 Matrix Softmax::ComputeGradient(const Vector& x) const {

@@ -22,7 +22,6 @@ const Matrix& Layer::GetWeights() const {
 const Vector& Layer::GetBias() const {
     return bias_;
 }
-using namespace std;
 
 Vector Layer::Compute(const Vector& x) const {
     return activation_function_->Compute(weights_ * x + bias_);

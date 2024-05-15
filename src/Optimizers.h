@@ -22,6 +22,9 @@ public:
 
     void DoStep(const std::vector<Matrix>& weights_grads, const std::vector<Vector>& bias_grads,
                 std::vector<Layer>* layers) override {
+        assert(layers && "Layers must me nonempty");
+        assert(weights_grads.size() == bias_grads.size() &&
+               "Count of weights and bias gradients must be same");
         Base::Object().DoStep(weights_grads, bias_grads, layers);
     }
 };
@@ -45,8 +48,8 @@ class SGD {
     DataType learning_rate_;
     DataType momentum_;
 
-    std::vector<Matrix> weights_deltas_;
-    std::vector<Vector> bias_deltas_;
+    MatrixSet weights_deltas_;
+    VectorSet bias_deltas_;
 
 public:
     SGD(DataType learning_rate = k_default_learning_rate, DataType momentum = k_default_momentum);
@@ -57,21 +60,24 @@ private:
     void InitDeltas(const std::vector<Matrix>& weights, const std::vector<Vector>& bias);
 };
 
-// class Adagrad {
-//     // Stochastic gradient descent
+class Adagrad {
+    // Stochastic gradient descent
 
-//     static constexpr DataType k_default_learning_rate = 4e-2;
-//     static constexpr DataType k_default_epsilon = 1e-15;
-//     DataType learning_rate_;
-//     DataType epsilon_;
+    static constexpr DataType k_default_learning_rate = 4e-2;
+    static constexpr DataType k_default_epsilon = 1e-15;
+    DataType learning_rate_;
+    DataType epsilon_;
 
-//     std::vector<Matrix> weights_deltas_;
-//     std::vector<Vector> bias_deltas_;
+    MatrixSet weights_Gm_;
+    VectorSet bias_Gm_;
 
-// public:
-//     SGD(DataType learning_rate = k_default_learning_rate, epsilon_ = k_default_epsilon);
-//     void DoStep(const std::vector<Matrix>& weights_grads, const std::vector<Vector>& bias_grads,
-//                 std::vector<Layer>* layers);
-// };
+public:
+    Adagrad(DataType learning_rate = k_default_learning_rate, DataType epsilon = k_default_epsilon);
+    void DoStep(const std::vector<Matrix>& weights_grads, const std::vector<Vector>& bias_grads,
+                std::vector<Layer>* layers);
+
+private:
+    void InitGms(const std::vector<Matrix>& weights, const std::vector<Vector>& bias);
+};
 
 }  // namespace NeuralNetwork

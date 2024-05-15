@@ -1,5 +1,5 @@
 #include <NeuralNetwork.h>
-
+#include <iostream>
 namespace NeuralNetwork {
 
 Net::Net(std::span<Layer> layers) {
@@ -13,7 +13,8 @@ Net::Net(std::span<Layer> layers) {
 }
 
 void Net::Fit(const DataLoader& train_data_loader, const Optimizer& optimizer,
-              const LossFunction& loss_function, SizeType epochs) {
+              const LossFunction& loss_function, SizeType epochs, TrainingInfo info,
+              const VectorSet& X_test, const VectorSet& y_test, SizeType each_epoch) {
     assert(loss_function.isDefined() && "Loss function is not defined");
     assert(optimizer.isDefined() && "Optimizer is not defined");
     assert(epochs > 0 && "Number of epochs must be positive number");
@@ -21,6 +22,11 @@ void Net::Fit(const DataLoader& train_data_loader, const Optimizer& optimizer,
     for (SizeType i = 0; i < epochs; ++i) {
         for (const Batch& batch : train_data_loader) {
             FitBatch(batch, optimizer, loss_function);
+        }
+        if (info == TrainingInfo::On && (i + 1) % each_epoch == 0) {
+            VectorSet preds = Predict(X_test);
+            std::cout << "Epoch: " << i + 1 << ", "
+                      << "Loss: " << loss_function->Compute(preds, y_test) << '\n';
         }
     }
 }
@@ -39,7 +45,11 @@ VectorSet Net::Predict(const VectorSet& X) const {
     }
     return preds;
 }
-using namespace std;
+void Net::SaveWeights(std::fstream& out) {
+    for (const auto& layer : layers_) {
+        out << layer.GetWeights() << layer.GetBias();
+    }
+}
 
 VectorSet Net::ForwardPass(const Vector& x) const {
     SizeType layers_size = std::size(layers_);
