@@ -14,5 +14,6 @@ using DataType = double;
 using SizeType = int32_t;
 
 using VectorSet = std::vector<Vector>;
+using MatrixSet = std::vector<Matrix>;
 
 }  // namespace NeuralNetwork

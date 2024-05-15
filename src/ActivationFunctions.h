@@ -5,113 +5,71 @@
 
 namespace NeuralNetwork {
 
-class Id {
-    // Identical function, Id(x) = x
-};
-
-class ReLU {
-    // Elementwise function, ReLU(x) = max(0, x)
-};
-
-class Sigmoid {
-    // Elementwise function, Sigmoid(x) = 1 / (1 + exp(-x))
-};
-
-class Tanh {
-    // Elementwise function, Tanh(x) = (exp(x) - exp(-x)) / (exp(x) + exp(-x))
-};
-
 namespace NNActivationFuncDetail {
 
-template <class TBase>
-class IActivationFunction : public TBase {
+template <class Base>
+class InterfaceAF : public Base {
 public:
     virtual Vector Compute(const Vector& x) const = 0;
     virtual Matrix ComputeGradient(const Vector& x) const = 0;
 };
 
-template <class TBase, class TObject>
-class ImplActivationFunction : public TBase {
-    using CBase = TBase;
-
+template <class Base, class Type>
+class AFImpl : public Base {
 public:
-    using CBase::CBase;
+    using Base::Base;
     Vector Compute(const Vector& x) const override {
-        // это очень костыльно, но лучше я не придумал
-        assert(false && "Not activation function");
+        return Base::Object().Compute(x);
     }
     Matrix ComputeGradient(const Vector& x) const override {
-        assert(false && "Not activation function");
+        return Base::Object().ComputeGradient(x);
     }
 };
 
-template <class TBase>
-class ImplActivationFunction<TBase, Id> : public TBase {
-    using CBase = TBase;
-
-public:
-    using CBase::CBase;
-    Vector Compute(const Vector& x) const override {
-        return x;
-    }
-    Matrix ComputeGradient(const Vector& x) const override {
-        return Matrix::Identity(x.size(), x.size());
-    }
-};
-
-template <class TBase>
-class ImplActivationFunction<TBase, ReLU> : public TBase {
-    using CBase = TBase;
-
-public:
-    using CBase::CBase;
-    Vector Compute(const Vector& x) const override {
-        return x.cwiseMax(0);
-    }
-    Matrix ComputeGradient(const Vector& x) const override {
-        return Matrix((x.array() > 0).matrix().asDiagonal());
-    }
-};
-
-template <class TBase>
-class ImplActivationFunction<TBase, Sigmoid> : public TBase {
-    using CBase = TBase;
-
-public:
-    using CBase::CBase;
-    Vector Compute(const Vector& x) const override {
-        return x.unaryExpr([](DataType xi) { return 1 / (1 + exp(-xi)); });
-    }
-    Matrix ComputeGradient(const Vector& x) const override {
-        return (Compute(x).cwiseProduct(Vector::Ones(x.size()) - Compute(x))).asDiagonal();
-    }
-};
-
-template <class TBase>
-class ImplActivationFunction<TBase, Tanh> : public TBase {
-    using CBase = TBase;
-
-public:
-    using CBase::CBase;
-    Vector Compute(const Vector& x) const override {
-        return x.unaryExpr([](DataType xi) { return tanh(xi); });
-    }
-    Matrix ComputeGradient(const Vector& x) const override {
-        Vector l_fact = Vector::Ones(x.size()) - Compute(x);
-        Vector r_fact = Vector::Ones(x.size()) + Compute(x);
-        return (l_fact.cwiseProduct(r_fact)).asDiagonal();
-    }
-};
-
-using ActivationFunctionT = CAnyObject<IActivationFunction, ImplActivationFunction>;
+using ActivationFunctionT = CAnyObject<InterfaceAF, AFImpl>;
 
 }  // namespace NNActivationFuncDetail
 
 class ActivationFunction : public NNActivationFuncDetail::ActivationFunctionT {
-    using CBase = NNActivationFuncDetail::ActivationFunctionT;
+    using Base = NNActivationFuncDetail::ActivationFunctionT;
 
 public:
-    using CBase::CBase;
+    using Base::Base;
+};
+
+class Id {
+    // Identical function, Id(x) = x
+public:
+    Vector Compute(const Vector& x) const;
+    Matrix ComputeGradient(const Vector& x) const;
+};
+
+class ReLU {
+    // Elementwise function, ReLU(x) = max(0, x)
+public:
+    Vector Compute(const Vector& x) const;
+    Matrix ComputeGradient(const Vector& x) const;
+};
+
+class Sigmoid {
+    // Elementwise function, Sigmoid(x) = 1 / (1 + exp(-x))
+public:
+    Vector Compute(const Vector& x) const;
+    Matrix ComputeGradient(const Vector& x) const;
+};
+
+class Tanh {
+    // Elementwise function, Tanh(x) = (exp(2x) - 1) / (exp(2x) + 1)
+public:
+    Vector Compute(const Vector& x) const;
+    Matrix ComputeGradient(const Vector& x) const;
+};
+
+class Softmax {
+    // Softmax(x) = {exp(x_i) / sum(exp(x_i))}
+public:
+    Vector Compute(const Vector& x) const;
+    Matrix ComputeGradient(const Vector& x) const;
 };
 
 }  // namespace NeuralNetwork

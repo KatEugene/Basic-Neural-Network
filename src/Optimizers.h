@@ -6,68 +6,72 @@
 
 namespace NeuralNetwork {
 
-class SGD {
-    // Stochastic gradient descent
-
-    DataType learning_rate_;
-
-public:
-    SGD(DataType learning_rate = 1e-2) : learning_rate_(learning_rate) {
-    }
-    DataType GetLearningRate() const {
-        return learning_rate_;
-    }
-};
-
 namespace NNOptimizerDetail {
 
-template <class TBase>
-class IOptimizer : public TBase {
+template <class Base>
+class InterfaceOpt : public Base {
 public:
-    virtual void DoStep(std::vector<Layer>* layers, const std::vector<Matrix>& weights_grads,
-                        const std::vector<Vector>& bias_grads) const = 0;
+    virtual void DoStep(const std::vector<Matrix>& weights_grads,
+                        const std::vector<Vector>& bias_grads, std::vector<Layer>* layers) = 0;
 };
 
-template <class TBase, class TObject>
-class ImplOptimizer : public TBase {
-    using CBase = TBase;
-
+template <class Base, class Type>
+class ImplOptimizer : public Base {
 public:
-    using CBase::CBase;
+    using Base::Base;
 
-    void DoStep(std::vector<Layer>* layers, const std::vector<Matrix>& weights_grads,
-                const std::vector<Vector>& bias_grads) const override {
-        assert(false && "Not optimizer");
+    void DoStep(const std::vector<Matrix>& weights_grads, const std::vector<Vector>& bias_grads,
+                std::vector<Layer>* layers) override {
+        Base::Object().DoStep(weights_grads, bias_grads, layers);
     }
 };
 
-template <class TBase>
-class ImplOptimizer<TBase, SGD> : public TBase {
-    using CBase = TBase;
-
-public:
-    using CBase::CBase;
-
-    void DoStep(std::vector<Layer>* layers, const std::vector<Matrix>& weights_grads,
-                const std::vector<Vector>& bias_grads) const override {
-        DataType learning_rate = CBase::Object().GetLearningRate();
-
-        for (size_t i = 0; i < layers->size(); ++i) {
-            layers->at(i).GetWeightsReference() -= learning_rate * weights_grads[i];
-            layers->at(i).GetBiasReference() -= learning_rate * bias_grads[i];
-        }
-    }
-};
-
-using OptimizerT = CAnyObject<IOptimizer, ImplOptimizer>;
+using OptimizerT = CAnyObject<InterfaceOpt, ImplOptimizer>;
 
 }  // namespace NNOptimizerDetail
 
 class Optimizer : public NNOptimizerDetail::OptimizerT {
-    using CBase = NNOptimizerDetail::OptimizerT;
+    using Base = NNOptimizerDetail::OptimizerT;
 
 public:
-    using CBase::CBase;
+    using Base::Base;
 };
+
+class SGD {
+    // Stochastic gradient descent
+
+    static constexpr DataType k_default_learning_rate = 4e-2;
+    static constexpr DataType k_default_momentum = 0;
+    DataType learning_rate_;
+    DataType momentum_;
+
+    std::vector<Matrix> weights_deltas_;
+    std::vector<Vector> bias_deltas_;
+
+public:
+    SGD(DataType learning_rate = k_default_learning_rate, DataType momentum = k_default_momentum);
+    void DoStep(const std::vector<Matrix>& weights_grads, const std::vector<Vector>& bias_grads,
+                std::vector<Layer>* layers);
+
+private:
+    void InitDeltas(const std::vector<Matrix>& weights, const std::vector<Vector>& bias);
+};
+
+// class Adagrad {
+//     // Stochastic gradient descent
+
+//     static constexpr DataType k_default_learning_rate = 4e-2;
+//     static constexpr DataType k_default_epsilon = 1e-15;
+//     DataType learning_rate_;
+//     DataType epsilon_;
+
+//     std::vector<Matrix> weights_deltas_;
+//     std::vector<Vector> bias_deltas_;
+
+// public:
+//     SGD(DataType learning_rate = k_default_learning_rate, epsilon_ = k_default_epsilon);
+//     void DoStep(const std::vector<Matrix>& weights_grads, const std::vector<Vector>& bias_grads,
+//                 std::vector<Layer>* layers);
+// };
 
 }  // namespace NeuralNetwork

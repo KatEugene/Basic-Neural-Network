@@ -1,9 +1,9 @@
-[submodule "libs/Eigen"]
-	path = libs/Eigen
-	url = https://gitlab.com/libeigen/eigen.git
 [submodule "libs/EigenRand"]
 	path = libs/EigenRand
 	url = https://github.com/bab2min/EigenRand.git
 [submodule "libs/GoogleTest"]
 	path = libs/GoogleTest
 	url = https://github.com/google/googletest.git
+[submodule "libs/Eigen"]
+	path = libs/Eigen
+	url = https://gitlab.com/libeigen/eigen

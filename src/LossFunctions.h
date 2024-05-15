@@ -7,69 +7,59 @@
 
 namespace NeuralNetwork {
 
-class MSE {
-    // Given vectors x, y in R^n, computes their squared 2nd norm : ||x - y||^2
-};
-
 namespace NNLossFuncDetail {
 
-template <class TBase>
-class ILossFunction : public TBase {
+template <class Base>
+class InterfaceLF : public Base {
 public:
     virtual DataType Compute(const Vector& predicted, const Vector& expected) const = 0;
     virtual DataType Compute(const VectorSet& predicted, const VectorSet& expected) const = 0;
     virtual Vector ComputeGradient(const Vector& predicted, const Vector& expected) const = 0;
 };
 
-template <class TBase, class TObject>
-class ImplLossFunction : public TBase {
-    using CBase = TBase;
-
+template <class Base, class Type>
+class ImplLossFunction : public Base {
 public:
-    using CBase::CBase;
+    using Base::Base;
 
     DataType Compute(const Vector& predicted, const Vector& expected) const override {
-        assert(false && "Not loss function");
+        return Base::Object().Compute(predicted, expected);
     }
     DataType Compute(const VectorSet& predicted, const VectorSet& expected) const override {
-        assert(false && "Not loss function");
+        return Base::Object().Compute(predicted, expected);
     }
     Vector ComputeGradient(const Vector& predicted, const Vector& expected) const override {
-        assert(false && "Not loss function");
+        return Base::Object().ComputeGradient(predicted, expected);
     }
 };
 
-template <class TBase>
-class ImplLossFunction<TBase, MSE> : public TBase {
-    using CBase = TBase;
-
-public:
-    using CBase::CBase;
-
-    DataType Compute(const Vector& predicted, const Vector& expected) const override {
-        return (predicted - expected).squaredNorm();
-    }
-    DataType Compute(const VectorSet& predicted, const VectorSet& expected) const override {
-        DataType sum = 0;
-        for (size_t i = 0; i < predicted.size(); ++i) {
-            sum += Compute(predicted[i], expected[i]);
-        }
-        return sum / predicted.size();
-    }
-    Vector ComputeGradient(const Vector& predicted, const Vector& expected) const override {
-        return 2 * (predicted - expected);
-    }
-};
-
-using LossFunctionT = CAnyObject<ILossFunction, ImplLossFunction>;
+using LossFunctionT = CAnyObject<InterfaceLF, ImplLossFunction>;
 
 }  // namespace NNLossFuncDetail
 
 class LossFunction : public NNLossFuncDetail::LossFunctionT {
-    using CBase = NNLossFuncDetail::LossFunctionT;
+    using Base = NNLossFuncDetail::LossFunctionT;
 
 public:
-    using CBase::CBase;
+    using Base::Base;
+};
+
+class MSE {
+    // Given vectors x, y in R^n, computes sum((x_i - y_i)^2)
+
+public:
+    DataType Compute(const Vector& predicted, const Vector& expected) const;
+    DataType Compute(const VectorSet& predicted, const VectorSet& expected) const;
+    Vector ComputeGradient(const Vector& predicted, const Vector& expected) const;
+};
+
+class MAE {
+    // Given vectors x, y in R^n, computes sum(abs(x_i - y_i))
+
+public:
+    DataType Compute(const Vector& predicted, const Vector& expected) const;
+    DataType Compute(const VectorSet& predicted, const VectorSet& expected) const;
+    Vector ComputeGradient(const Vector& predicted, const Vector& expected) const;
 };
 
 }  // namespace NeuralNetwork
